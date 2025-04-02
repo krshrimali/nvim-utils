@@ -1,4 +1,5 @@
 -- tgkrsutil.lua (language-agnostic Treesitter utility plugin)
+
 local M = {}
 local config = {
   enable_test_runner = true,
@@ -10,11 +11,12 @@ local config = {
 function M.setup(opts)
   config = vim.tbl_deep_extend("force", config, opts or {})
 
-  -- Optional: define default keymaps here
   vim.keymap.set("n", "<leader>rt", function() M.run_test(false) end, { desc = "Run test on function" })
   vim.keymap.set("n", "<leader>rT", function() M.run_test(true) end, { desc = "Run test in new terminal" })
   vim.keymap.set("n", "<leader>rif", M.copy_parent_function, { desc = "Copy parent function" })
   vim.keymap.set("n", "<leader>ric", M.copy_parent_class, { desc = "Copy parent class" })
+  vim.keymap.set("n", "<leader>rsf", M.show_function_signature, { desc = "Show parent function signature" })
+  vim.keymap.set("n", "<leader>rsc", M.show_class_signature, { desc = "Show parent class signature" })
 end
 
 local terminal_bufnr = nil
@@ -83,6 +85,98 @@ function M.find_parent_function()
   signature = signature:gsub("%s+", " "):gsub("^%s*", ""):gsub("%s*$", "")
 
   return vim.fn.expand("%:p"), { signature }, function_name
+end
+
+function M.show_function_signature()
+  local file_path, signature_lines, _ = M.find_parent_function()
+  if not signature_lines then
+    print("Function signature not found")
+    return
+  end
+
+  local content = { "Function Signature:" }
+  vim.list_extend(content, signature_lines)
+  if file_path then
+    table.insert(content, "File: " .. file_path)
+  end
+
+  local bufnr = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
+
+  local width = vim.api.nvim_get_option("columns")
+  local height = vim.api.nvim_get_option("lines")
+  local win_height = #content + 2
+  local win_width = math.ceil(width * 0.6)
+  local row = math.ceil((height - win_height) / 2 - 1)
+  local col = math.ceil((width - win_width) / 2)
+
+  local win_opts = {
+    style = "minimal",
+    relative = "editor",
+    width = win_width,
+    height = win_height,
+    row = row,
+    col = col,
+    border = "rounded",
+  }
+  local win_id = vim.api.nvim_open_win(bufnr, true, win_opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "q", "<CMD>close<CR>", { noremap = true, silent = true })
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "<Esc>", "<CMD>close<CR>", { noremap = true, silent = true })
+end
+
+function M.show_class_signature()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local parser = get_buf_parser(bufnr)
+  if not parser then return end
+
+  local tree = parser:parse()[1]
+  local root = tree:root()
+  local node = root:named_descendant_for_range(cursor[1] - 1, cursor[2], cursor[1] - 1, cursor[2])
+  local class_node = find_parent_node(node, is_class_node)
+  if not class_node then
+    print("No parent class found")
+    return
+  end
+
+  local class_name = "<anonymous>"
+  for i = 0, class_node:named_child_count() - 1 do
+    local child = class_node:named_child(i)
+    if child:type():match("identifier") then
+      class_name = vim.treesitter.get_node_text(child, bufnr)
+      break
+    end
+  end
+
+  local sr, sc, er, ec = class_node:range()
+  local lines = vim.api.nvim_buf_get_text(bufnr, sr, sc, sr + 1, 0, {})
+  local signature = lines[1] or "class " .. class_name
+  signature = signature:gsub("%s+", " "):gsub("^%s*", ""):gsub("%s*$", "")
+
+  local content = { "Class Signature:", signature, "File: " .. vim.fn.expand("%:p") }
+
+  local popup_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(popup_buf, 0, -1, false, content)
+
+  local width = vim.api.nvim_get_option("columns")
+  local height = vim.api.nvim_get_option("lines")
+  local win_height = #content + 2
+  local win_width = math.ceil(width * 0.5)
+  local row = math.ceil((height - win_height) / 2 - 1)
+  local col = math.ceil((width - win_width) / 2)
+
+  local opts = {
+    style = "minimal",
+    relative = "editor",
+    width = win_width,
+    height = win_height,
+    row = row,
+    col = col,
+    border = "rounded",
+  }
+  local win_id = vim.api.nvim_open_win(popup_buf, true, opts)
+  vim.api.nvim_buf_set_keymap(popup_buf, "n", "q", "<CMD>close<CR>", { noremap = true, silent = true })
+  vim.api.nvim_buf_set_keymap(popup_buf, "n", "<Esc>", "<CMD>close<CR>", { noremap = true, silent = true })
 end
 
 function M.generate_test_command()
