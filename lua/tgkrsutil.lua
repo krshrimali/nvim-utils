@@ -87,6 +87,38 @@ function M.find_parent_function()
   return vim.fn.expand("%:p"), { signature }, function_name
 end
 
+function M.find_parent_function()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+  local row, col = cursor_pos[1] - 1, cursor_pos[2]
+
+  local parser, lang = get_buf_parser(bufnr)
+  if not parser then return nil, nil, nil end
+
+  local tree = parser:parse()[1]
+  local root = tree:root()
+  local node = root:named_descendant_for_range(row, col, row, col)
+  local parent_func_node = find_parent_node(node, is_function_node)
+
+  if not parent_func_node then
+    print("No parent function found")
+    return nil, nil, nil
+  end
+
+  local function_name = "<anonymous>"
+  for i = 0, parent_func_node:named_child_count() - 1 do
+    local child = parent_func_node:named_child(i)
+    if child:type():match("identifier") then
+      function_name = vim.treesitter.get_node_text(child, bufnr)
+      break
+    end
+  end
+
+  local start_row, start_col, end_row, end_col = parent_func_node:range()
+  local lines = vim.api.nvim_buf_get_text(bufnr, start_row, start_col, end_row, end_col, {})
+  return vim.fn.expand("%:p"), lines, function_name
+end
+
 function M.show_function_signature()
   local file_path, signature_lines, _ = M.find_parent_function()
   if not signature_lines then
@@ -94,7 +126,7 @@ function M.show_function_signature()
     return
   end
 
-  local content = { "Function Signature:" }
+  local content = { "Function Definition:" }
   vim.list_extend(content, signature_lines)
   if file_path then
     table.insert(content, "File: " .. file_path)
@@ -105,7 +137,7 @@ function M.show_function_signature()
 
   local width = vim.api.nvim_get_option("columns")
   local height = vim.api.nvim_get_option("lines")
-  local win_height = #content + 2
+  local win_height = math.min(#content + 2, height - 4)
   local win_width = math.ceil(width * 0.6)
   local row = math.ceil((height - win_height) / 2 - 1)
   local col = math.ceil((width - win_width) / 2)
