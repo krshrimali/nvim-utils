@@ -87,5 +87,5 @@ require("tgkrsutil").setup({
 
 ## 🪪 License
 
-MIT © Your Name
+MIT © Kushashwa Ravi Shrimali
 
