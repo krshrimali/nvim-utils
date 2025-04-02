@@ -114,8 +114,18 @@ function M.find_parent_function()
     end
   end
 
-  local start_row, start_col, end_row, end_col = parent_func_node:range()
-  local lines = vim.api.nvim_buf_get_text(bufnr, start_row, start_col, end_row, end_col, {})
+  -- Attempt to extract only the function signature (header)
+  local start_row, start_col = parent_func_node:start()
+  local header_end_row = start_row
+  local lines = {}
+
+  local all_lines = vim.api.nvim_buf_get_lines(bufnr, start_row, start_row + 10, false) -- read max 10 lines from function start
+  for _, line in ipairs(all_lines) do
+    table.insert(lines, line)
+    header_end_row = header_end_row + 1
+    if line:match("[%)]%s*[:{]?$") then break end -- match end of function signature (Python/JS-style)
+  end
+
   return vim.fn.expand("%:p"), lines, function_name
 end
 
@@ -126,7 +136,7 @@ function M.show_function_signature()
     return
   end
 
-  local content = { "Function Definition:" }
+  local content = { "Function Signature:" }
   vim.list_extend(content, signature_lines)
   if file_path then
     table.insert(content, "File: " .. file_path)
