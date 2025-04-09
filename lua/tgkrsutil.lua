@@ -13,6 +13,7 @@ function M.setup(opts)
 
   vim.keymap.set("n", "<leader>rt", function() M.run_test(false) end, { desc = "Run test on function" })
   vim.keymap.set("n", "<leader>rT", function() M.run_test(true) end, { desc = "Run test in new terminal" })
+	vim.keymap.set("n", "<leader>rc", function() M.copy_test() end, { desc = "Copy test command in your clipboard" })
   vim.keymap.set("n", "<leader>rif", M.copy_parent_function, { desc = "Copy parent function" })
   vim.keymap.set("n", "<leader>ric", M.copy_parent_class, { desc = "Copy parent class" })
   vim.keymap.set("n", "<leader>rsf", M.show_function_signature, { desc = "Show parent function signature" })
@@ -245,6 +246,13 @@ function M.run_test(open_new)
 
   vim.fn.chansend(vim.b.terminal_job_id, cmd .. "\n")
   vim.cmd("startinsert")
+end
+
+function M.copy_test()
+	local cmd = M.generate_test_command()
+	if not cmd then return end
+
+	copy_to_clipboard(cmd, "Test command copied to clipboard")
 end
 
 local function copy_to_clipboard(content, msg)
