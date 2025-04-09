@@ -248,13 +248,6 @@ function M.run_test(open_new)
   vim.cmd("startinsert")
 end
 
-function M.copy_test()
-	local cmd = M.generate_test_command()
-	if not cmd then return end
-
-	copy_to_clipboard(cmd, "Test command copied to clipboard")
-end
-
 local function copy_to_clipboard(content, msg)
   if content then
     vim.fn.setreg("+", content)
@@ -262,6 +255,13 @@ local function copy_to_clipboard(content, msg)
   else
     print("Nothing to copy")
   end
+end
+
+function M.copy_test()
+	local cmd = M.generate_test_command()
+	if not cmd then return end
+
+	copy_to_clipboard(cmd, "Test command copied to clipboard")
 end
 
 function M.copy_parent_function()
