@@ -21,7 +21,7 @@ In your Lazy config (`~/.config/nvim/lua/plugins/tgkrsutil.lua`):
 
 ```lua
 return {
-  "krshrimali/nvim-utils",
+  "krshrimali/nvim-utils.nvim",
   config = function()
     require("tgkrsutil").setup({
       enable_test_runner = true,
@@ -49,15 +49,6 @@ return {
 | `<leader>rsc`  | Show parent class signature (first line)      |
 
 > These are registered automatically in `setup()` but can be overridden manually.
-
----
-
-## 🧠 How it Works
-
-This plugin uses Treesitter to:
-- Walk up the syntax tree to find enclosing functions/classes
-- Extract signature headers (even multi-line ones!)
-- Provide consistent behavior across Python, Lua, JavaScript, etc.
 
 ---
 
