@@ -6,13 +6,12 @@ A Neovim plugin to explore, inspect, and extract structure from code using [nvim
 
 ### ✨ Features
 
-- Language-agnostic Treesitter-based navigation
-- 🧠 Extract current function or class under cursor
-- 📋 Copy parent function/class to clipboard
-- 🪄 Show multi-line function **signatures**
-- 🧪 Run `pytest` for Python functions (optional, customizable)
-- 🗂 Minimal terminal integration
-- 🔑 Keymap-ready with LazyVim/which-key support
+- 🧠 Extract current function or class under cursor.
+- 📋 Copy parent function/class to clipboard.
+- 🪄 Show multi-line function **signatures**.
+- 🧪 Run `pytest` for Python functions (optional, customizable).
+- 📋 Copy the test command for the current parent function to clipboard.
+- 🔑 Keymap-ready with LazyVim/which-key support.
 
 ---
 
