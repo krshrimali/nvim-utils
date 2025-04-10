@@ -40,8 +40,9 @@ return {
 
 | Mapping         | Description                                  |
 |----------------|----------------------------------------------|
-| `<leader>rt`   | Run test for function (Python only)           |
-| `<leader>rT`   | Run test in a new terminal                    |
+| `<leader>rt`   | Run test for function (Python only)                                   |
+| `<leader>rT`   | Run test in a new terminal (_will be deleted soon_)                    |
+| `<leader>rc`   | Copy test command to the clipboard            |
 | `<leader>rif`  | Copy parent function to clipboard             |
 | `<leader>ric`  | Copy parent class to clipboard                |
 | `<leader>rsf`  | Show full parent function **signature**       |
